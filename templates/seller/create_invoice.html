@@ -1,0 +1,472 @@
+{% extends "base.html" %} {% block title %}Create Invoice - Invoice Management
+System{% endblock %} {% block back_button %}
+<a
+  href="{{ url_for('seller_invoices') }}"
+  class="btn btn-outline btn-sm back-btn"
+>
+  <i class="fas fa-arrow-left"></i>
+  Back to Invoices
+</a>
+{% endblock %} {% block content %}
+<div class="dashboard">
+  <div class="section-header">
+    <h2 class="section-title">Create New Invoice</h2>
+  </div>
+
+  <form method="POST" class="invoice-form">
+    <div class="card">
+      <h3 class="form-section-title">Customer Information</h3>
+      <div class="form-group">
+        <label class="form-label">Select Customer</label>
+        <select name="customer_id" class="form-input" required>
+          <option value="">Choose a customer...</option>
+          {% for customer in customers %}
+          <option value="{{ customer.id }}">
+            {{ customer.name }} ({{ customer.email }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <button
+          type="button"
+          class="btn btn-outline"
+          onclick="showNewCustomerForm()"
+        >
+          <i class="fas fa-plus"></i>
+          Add New Customer
+        </button>
+      </div>
+
+      <!-- New Customer Form (Hidden by default) -->
+      <div
+        id="new-customer-form"
+        style="
+          display: none;
+          margin-top: 20px;
+          padding: 20px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          background-color: #f9f9f9;
+        "
+      >
+        <h4>Add New Customer</h4>
+        <div class="form-group">
+          <label class="form-label">Customer Name</label>
+          <input
+            type="text"
+            name="new_customer_name"
+            class="form-input"
+            placeholder="Enter customer name"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input
+            type="email"
+            name="new_customer_email"
+            class="form-input"
+            placeholder="Enter email"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input
+            type="text"
+            name="new_customer_phone"
+            class="form-input"
+            placeholder="Enter phone number"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Address</label>
+          <textarea
+            name="new_customer_address"
+            class="form-input form-textarea"
+            placeholder="Enter address"
+          ></textarea>
+        </div>
+        <div class="form-group">
+          <button
+            type="button"
+            class="btn btn-primary"
+            onclick="addNewCustomer()"
+          >
+            <i class="fas fa-save"></i>
+            Add Customer
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline"
+            onclick="hideNewCustomerForm()"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="form-section-header">
+        <h3 class="form-section-title">Invoice Items</h3>
+        <div>
+          <button type="button" class="btn btn-primary" onclick="addItem()">
+            <i class="fas fa-plus"></i>
+            Add Product
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline"
+            onclick="showNewProductForm()"
+            style="margin-left: 8px"
+          >
+            <i class="fas fa-plus"></i>
+            Add New Product
+          </button>
+        </div>
+      </div>
+
+      <div id="items-container">
+        <div class="empty-items" id="empty-items">
+          <p>No items added yet. Click "Add Item" to get started.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- New Product Form (Hidden by default) -->
+    <div class="card" id="new-product-form" style="display: none">
+      <h3 class="form-section-title">Add New Product</h3>
+      <div class="form-group">
+        <label class="form-label">Product Name</label>
+        <input
+          type="text"
+          id="np_name"
+          class="form-input"
+          placeholder="Enter product name"
+        />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Price (₹)</label>
+        <input
+          type="number"
+          id="np_price"
+          class="form-input"
+          placeholder="0.00"
+          step="10.0"
+          min="0"
+        />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stock Quantity</label>
+        <input
+          type="number"
+          id="np_stock"
+          class="form-input"
+          placeholder="0"
+          min="0"
+          value="0"
+        />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea
+          id="np_desc"
+          class="form-input form-textarea"
+          placeholder="Enter product description"
+        ></textarea>
+      </div>
+      <div class="form-group">
+        <button type="button" class="btn btn-primary" onclick="addNewProduct()">
+          <i class="fas fa-save"></i>
+          Save and Add as Item
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline"
+          onclick="hideNewProductForm()"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="form-section-title">Invoice Details</h3>
+      <div class="form-group">
+        <label class="form-label">Due Date</label>
+        <input
+          type="date"
+          name="due_date"
+          class="form-input"
+          style="max-width: 200px"
+        />
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="form-section-title">Invoice Summary</h3>
+      <div class="invoice-summary">
+        <div class="summary-row">
+          <span>Subtotal:</span>
+          <span id="subtotal">₹0.00</span>
+        </div>
+        <div class="summary-row">
+          <span>Tax:</span>
+          <input
+            type="number"
+            name="tax"
+            id="tax-input"
+            class="form-input tax-input"
+            min="0"
+            step="1"
+            value="10"
+            style="max-width: 120px"
+          />
+        </div>
+        <div class="summary-row total">
+          <span>Total:</span>
+          <span id="total">₹0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i>
+        Create Invoice
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+    let itemCount = 0;
+    const products = {{ products | tojson }};
+
+    function addItem() {
+        itemCount++;
+        const container = document.getElementById('items-container');
+        const emptyItems = document.getElementById('empty-items');
+
+        if (emptyItems) {
+            emptyItems.style.display = 'none';
+        }
+
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'invoice-item';
+        itemDiv.innerHTML = `
+            <div class="item-row">
+                <div class="form-group">
+                    <label class="form-label">Product</label>
+                    <select name="product_${itemCount}_id" class="form-input product-select" onchange="updateItemTotal(${itemCount})" required>
+                        <option value="">Select product...</option>
+                        ${products.map(p => `<option value="${p.id}">${p.name} - ₹${p.price} (Stock: ${p.stock})</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" name="quantity_${itemCount}" class="form-input quantity-input" min="1" value="1" onchange="updateItemTotal(${itemCount})" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Discount (₹)</label>
+                    <input type="number" name="discount_${itemCount}" class="form-input discount-input" min="0" step="10.0" value="0" onchange="updateItemTotal(${itemCount})">
+                </div>
+                <div class="item-total">
+                    <label class="form-label">Total</label>
+                    <div class="total-display" id="item-total-${itemCount}">₹0.00</div>
+                </div>
+                <div class="item-actions">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeItem(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(itemDiv);
+        updateTotals();
+    }
+
+    function addItemWithPreselected(productId, tempMeta) {
+        addItem();
+        const select = document.querySelector(`select[name="product_${itemCount}_id"]`);
+        if (select) {
+            select.value = productId;
+            updateItemTotal(itemCount);
+            if (tempMeta) {
+                // Attach hidden inputs so backend can create this temp product
+                const form = document.querySelector('form');
+                const hn = document.createElement('input'); hn.type='hidden'; hn.name=`temp_product_name_${itemCount}`; hn.value=tempMeta.name; form.appendChild(hn);
+                const hp = document.createElement('input'); hp.type='hidden'; hp.name=`temp_product_price_${itemCount}`; hp.value=tempMeta.price; form.appendChild(hp);
+                const hs = document.createElement('input'); hs.type='hidden'; hs.name=`temp_product_stock_${itemCount}`; hs.value=tempMeta.stock; form.appendChild(hs);
+                const hd = document.createElement('input'); hd.type='hidden'; hd.name=`temp_product_desc_${itemCount}`; hd.value=tempMeta.description; form.appendChild(hd);
+            }
+        }
+    }
+
+    function removeItem(button) {
+        button.closest('.invoice-item').remove();
+        updateTotals();
+
+        const items = document.querySelectorAll('.invoice-item');
+        if (items.length === 0) {
+            document.getElementById('empty-items').style.display = 'block';
+        }
+    }
+
+    function updateItemTotal(itemIndex) {
+        const productSelect = document.querySelector(`select[name="product_${itemIndex}_id"]`);
+        const quantityInput = document.querySelector(`input[name="quantity_${itemIndex}"]`);
+        const discountInput = document.querySelector(`input[name="discount_${itemIndex}"]`);
+        const totalDisplay = document.getElementById(`item-total-${itemIndex}`);
+
+        if (productSelect.value && quantityInput.value) {
+            const product = products.find(p => p.id === productSelect.value);
+            if (product) {
+                const quantity = parseInt(quantityInput.value) || 0;
+                const discount = parseFloat(discountInput.value) || 0;
+                const total = (product.price * quantity) - discount;
+                totalDisplay.textContent = `₹${total.toFixed(2)}`;
+            }
+        } else {
+            totalDisplay.textContent = '₹0.00';
+        }
+
+        updateTotals();
+    }
+
+    function updateTotals() {
+        let subtotal = 0;
+        const items = document.querySelectorAll('.invoice-item');
+
+        items.forEach(item => {
+            const totalDisplay = item.querySelector('.total-display');
+            const totalText = totalDisplay.textContent.replace('₹', '');
+            subtotal += parseFloat(totalText) || 0;
+        });
+
+        const tax = parseFloat(document.getElementById('tax-input').value) || 0;
+        const total = subtotal + tax;
+
+        document.getElementById('subtotal').textContent = `₹${subtotal.toFixed(2)}`;
+        document.getElementById('total').textContent = `₹${total.toFixed(2)}`;
+    }
+
+    // Add event listener for tax input
+    document.getElementById('tax-input').addEventListener('input', updateTotals);
+
+    function showNewCustomerForm() {
+        document.getElementById('new-customer-form').style.display = 'block';
+    }
+
+    function hideNewCustomerForm() {
+        document.getElementById('new-customer-form').style.display = 'none';
+        // Clear form fields
+        document.querySelector('input[name="new_customer_name"]').value = '';
+        document.querySelector('input[name="new_customer_email"]').value = '';
+        document.querySelector('input[name="new_customer_phone"]').value = '';
+        document.querySelector('textarea[name="new_customer_address"]').value = '';
+    }
+
+    function addNewCustomer() {
+        const name = document.querySelector('input[name="new_customer_name"]').value;
+        const email = document.querySelector('input[name="new_customer_email"]').value;
+        const phone = document.querySelector('input[name="new_customer_phone"]').value;
+        const address = document.querySelector('textarea[name="new_customer_address"]').value;
+
+        if (!name || !email || !phone || !address) {
+            alert('Please fill in all customer fields');
+            return;
+        }
+
+        // Create a temporary customer option
+        const customerSelect = document.querySelector('select[name="customer_id"]');
+        const tempOption = document.createElement('option');
+        tempOption.value = 'temp_' + Date.now();
+        tempOption.textContent = name + ' (' + email + ')';
+        tempOption.selected = true;
+        customerSelect.appendChild(tempOption);
+
+        // Store the customer data in hidden fields
+        const hiddenName = document.createElement('input');
+        hiddenName.type = 'hidden';
+        hiddenName.name = 'temp_customer_name';
+        hiddenName.value = name;
+
+        const hiddenEmail = document.createElement('input');
+        hiddenEmail.type = 'hidden';
+        hiddenEmail.name = 'temp_customer_email';
+        hiddenEmail.value = email;
+
+        const hiddenPhone = document.createElement('input');
+        hiddenPhone.type = 'hidden';
+        hiddenPhone.name = 'temp_customer_phone';
+        hiddenPhone.value = phone;
+
+        const hiddenAddress = document.createElement('input');
+        hiddenAddress.type = 'hidden';
+        hiddenAddress.name = 'temp_customer_address';
+        hiddenAddress.value = address;
+
+        document.querySelector('form').appendChild(hiddenName);
+        document.querySelector('form').appendChild(hiddenEmail);
+        document.querySelector('form').appendChild(hiddenPhone);
+        document.querySelector('form').appendChild(hiddenAddress);
+
+        hideNewCustomerForm();
+    }
+
+    function showNewProductForm() {
+        document.getElementById('new-product-form').style.display = 'block';
+    }
+
+    function hideNewProductForm() {
+        document.getElementById('new-product-form').style.display = 'none';
+        document.getElementById('np_name').value = '';
+        document.getElementById('np_price').value = '';
+        document.getElementById('np_stock').value = '0';
+        document.getElementById('np_desc').value = '';
+    }
+
+  function addNewProduct() {
+      const name = document.getElementById('np_name').value;
+      const price = parseFloat(document.getElementById('np_price').value);
+      const stock = parseInt(document.getElementById('np_stock').value) || 0;
+      const description = document.getElementById('np_desc').value;
+      if (!name || isNaN(price)) {
+          alert('Please provide at least a name and price for the product');
+          return;
+      }
+
+      // Save the product to the database via API
+      fetch('/api/products/add', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name, price, stock, description })
+      })
+      .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Add the new product to the products array
+            products.push(data.product);
+            // Add it as an invoice item - no need for temp product handling
+            addItem();
+            const select = document.querySelector(`select[name="product_${itemCount}_id"]`);
+            if (select) {
+                select.value = data.product.id;
+                updateItemTotal(itemCount);
+            }
+            hideNewProductForm();
+        } else {
+            alert('Failed to add product: ' + (data.error || 'Unknown error'));
+        }
+    })
+      .catch(error => {
+          console.error('Error adding product:', error);
+          alert('Failed to add product. Please try again.');
+      });
+  }
+</script>
+{% endblock %}

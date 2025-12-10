@@ -1,0 +1,88 @@
+{% extends "base.html" %} {% block title %}Seller Dashboard - Invoice Management
+System{% endblock %} {% block content %}
+<div class="dashboard">
+  <div class="dashboard-header">
+    <p class="dashboard-subtitle">Welcome back, {{ session.user_name }}</p>
+  </div>
+
+  <div class="dashboard-stats">
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.total_products }}</div>
+      <div class="stat-label">Total Products</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.total_customers }}</div>
+      <div class="stat-label">Total Customers</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.total_invoices }}</div>
+      <div class="stat-label">Total Invoices</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.paid_invoices }}</div>
+      <div class="stat-label">Paid Invoices</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.unpaid_invoices }}</div>
+      <div class="stat-label">Unpaid Invoices</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.overdue_invoices }}</div>
+      <div class="stat-label">Overdue Invoices</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">
+        ₹{{ "%.2f"|format(stats.revenue_collected) }}
+      </div>
+      <div class="stat-label">Revenue Collected</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">₹{{ "%.2f"|format(stats.revenue_due) }}</div>
+      <div class="stat-label">Revenue Due</div>
+    </div>
+  </div>
+
+  <div class="dashboard-content">
+    <div class="main-content">
+      <div class="card">
+        <h3 class="section-title">Recent Activity</h3>
+        <div class="activity-list">
+          {% if activities %} {% for activity in activities %}
+          <div class="activity-item">
+            <div class="activity-icon">
+              {% if activity.action_type == 'product_added' %}
+              <i class="fas fa-box"></i>
+              {% elif activity.action_type == 'invoice_created' %}
+              <i class="fas fa-file-invoice"></i>
+              {% elif activity.action_type == 'product_updated' %}
+              <i class="fas fa-edit"></i>
+              {% elif activity.action_type == 'product_deleted' %}
+              <i class="fas fa-trash"></i>
+              {% else %}
+              <i class="fas fa-info-circle"></i>
+              {% endif %}
+            </div>
+            <div class="activity-content">
+              <p>{{ activity.description }}</p>
+              <span class="activity-time">{{ activity.time_ago }}</span>
+            </div>
+          </div>
+          {% endfor %} {% else %}
+          <div class="activity-item">
+            <div class="activity-icon">
+              <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="activity-content">
+              <p>No recent activity</p>
+              <span class="activity-time"
+                >Start by adding products or creating invoices</span
+              >
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

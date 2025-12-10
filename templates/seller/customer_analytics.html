@@ -1,0 +1,169 @@
+{% extends "base.html" %} {% block title %}Customer Analytics - Invoice
+Management System{% endblock %} {% block back_button %}
+<a
+  href="{{ url_for('seller_dashboard') }}"
+  class="btn btn-outline btn-sm back-btn"
+>
+  <i class="fas fa-arrow-left"></i>
+  Back to Dashboard
+</a>
+{% endblock %} {% block content %}
+<div class="dashboard">
+  <div class="section-header">
+    <h2 class="section-title">Customer Analytics</h2>
+  </div>
+
+  <div class="card" style="margin-bottom: 16px">
+    <form
+      method="get"
+      class="form-inline"
+      style="display: flex; gap: 12px; align-items: end; flex-wrap: wrap"
+    >
+      <div class="form-group">
+        <label class="form-label" for="start_date">From Date</label>
+        <input
+          type="date"
+          id="start_date"
+          name="start_date"
+          value="{{ start_date or '' }}"
+          class="form-input"
+          style="max-width: 170px"
+        />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="end_date">To Date</label>
+        <input
+          type="date"
+          id="end_date"
+          name="end_date"
+          value="{{ end_date or '' }}"
+          class="form-input"
+          style="max-width: 170px"
+        />
+      </div>
+      <div class="form-group">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-filter"></i>
+          Apply Filter
+        </button>
+        <a href="{{ url_for('customer_analytics') }}" class="btn btn-outline"
+          >Reset</a
+        >
+      </div>
+    </form>
+  </div>
+
+  <div
+    style="
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    "
+  >
+    <div class="card">
+      <h3 class="section-title" style="margin-bottom: 16px">
+        <i class="fas fa-trophy"></i> Most Invoices
+      </h3>
+      {% if most_invoices %}
+      <div style="padding: 16px">
+        <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px">
+          {{ most_invoices.c_name }}
+        </div>
+        <div style="color: #666; margin-bottom: 4px">
+          {{ most_invoices.c_email }}
+        </div>
+        <div style="margin-top: 12px">
+          <span style="font-weight: 600">Invoice Count:</span>
+          <span style="color: #4e79a7; font-size: 20px; font-weight: 700"
+            >{{ most_invoices.invoice_count }}</span
+          >
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding: 32px">
+        <p>No paid invoices found for the selected period.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h3 class="section-title" style="margin-bottom: 16px">
+        <i class="fas fa-chart-line"></i> Least Invoices
+      </h3>
+      {% if least_invoices %}
+      <div style="padding: 16px">
+        <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px">
+          {{ least_invoices.c_name }}
+        </div>
+        <div style="color: #666; margin-bottom: 4px">
+          {{ least_invoices.c_email }}
+        </div>
+        <div style="margin-top: 12px">
+          <span style="font-weight: 600">Invoice Count:</span>
+          <span style="color: #e15759; font-size: 20px; font-weight: 700"
+            >{{ least_invoices.invoice_count or 0 }}</span
+          >
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding: 32px">
+        <p>No customers found.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h3 class="section-title" style="margin-bottom: 16px">
+        <i class="fas fa-money-bill-wave"></i> Most Purchased
+      </h3>
+      {% if most_purchased %}
+      <div style="padding: 16px">
+        <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px">
+          {{ most_purchased.c_name }}
+        </div>
+        <div style="color: #666; margin-bottom: 4px">
+          {{ most_purchased.c_email }}
+        </div>
+        <div style="margin-top: 12px">
+          <span style="font-weight: 600">Total:</span>
+          <span style="color: #59a14f; font-size: 20px; font-weight: 700"
+            >₹{{ "%.2f"|format(most_purchased.total_purchased or 0) }}</span
+          >
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding: 32px">
+        <p>No paid invoices found for the selected period.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h3 class="section-title" style="margin-bottom: 16px">
+        <i class="fas fa-shopping-cart"></i> Least Purchased
+      </h3>
+      {% if least_purchased %}
+      <div style="padding: 16px">
+        <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px">
+          {{ least_purchased.c_name }}
+        </div>
+        <div style="color: #666; margin-bottom: 4px">
+          {{ least_purchased.c_email }}
+        </div>
+        <div style="margin-top: 12px">
+          <span style="font-weight: 600">Total:</span>
+          <span style="color: #f28e2b; font-size: 20px; font-weight: 700"
+            >₹{{ "%.2f"|format(least_purchased.total_purchased or 0) }}</span
+          >
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding: 32px">
+        <p>No customers found.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

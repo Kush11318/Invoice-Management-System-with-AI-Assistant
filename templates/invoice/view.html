@@ -1,0 +1,83 @@
+{% extends "base.html" %} {% block title %}Invoice {{ invoice.id }} - Invoice
+Management System{% endblock %} {% block content %}
+<div class="dashboard">
+  <div class="section-header">
+    <h2 class="section-title">Invoice {{ invoice.id }}</h2>
+    <div class="action-buttons">
+      {% if session.user_role == 'seller' %}
+      <a href="{{ url_for('seller_invoices') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i>
+        Back to Invoices
+      </a>
+      {% if invoice.status == 'cancelled' %}
+      <a href="{{ url_for('delete_invoice', invoice_id=invoice.id) }}" class="btn btn-danger"
+        onclick="return confirm('Are you sure you want to delete invoice {{ invoice.id }}? This action cannot be undone.')">
+        <i class="fas fa-trash"></i>
+        Delete Invoice
+      </a>
+      {% endif %} {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="invoice-details">
+      <div class="invoice-header">
+        <div class="invoice-info">
+          <h3>Invoice No {{ invoice.id }}</h3>
+          <p><strong>Date:</strong> {{ invoice.date }}</p>
+          <p>
+            <strong>Status:</strong>
+            <span class="status-badge status-{{ invoice.status }}">
+              {{ invoice.status.title() }}
+            </span>
+          </p>
+        </div>
+        <div class="customer-details">
+          <h4>Bill To:</h4>
+          <p><strong>{{ invoice.customer_name }}</strong></p>
+          <p>{{ invoice.customer_email }}</p>
+        </div>
+      </div>
+
+      <div class="invoice-items">
+        <h4>Items</h4>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Quantity</th>
+              <th>Price (₹)</th>
+              <th>Total (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in invoice.items %}
+            <tr>
+              <td>{{ item.product_name }}</td>
+              <td>{{ item.item_quantity }}</td>
+              <td>₹{{ "%.2f"|format(item.price) }}</td>
+              <td>₹{{ "%.2f"|format(item.total) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="invoice-summary">
+        <div class="summary-row">
+          <span>Subtotal:</span>
+          <span>₹{{ "%.2f"|format(invoice.amount - invoice.tax) }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Tax:</span><span>₹{{ "%.2f"|format(invoice.tax) }}</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total:</span>
+          <span>₹{{ "%.2f"|format(invoice.amount) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}{{ customer.name }}'s Invoices - Invoice Management System{% endblock %}
+
+{% block back_button %}
+<a href="{{ url_for('seller_customers') }}" class="btn btn-outline btn-sm back-btn">
+    <i class="fas fa-arrow-left"></i>
+    Back to Customers
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="section-header">
+        <h2 class="section-title">{{ customer.name }}'s Invoices</h2>
+    </div>
+
+    <div class="card">
+        <div class="customer-info">
+            <h3>Customer Information</h3>
+            <p><strong>Name:</strong> {{ customer.name }}</p>
+            <p><strong>Email:</strong> {{ customer.email }}</p>
+            <p><strong>Phone:</strong> {{ customer.phone }}</p>
+            <p><strong>Address:</strong> {{ customer.address }}</p>
+        </div>
+    </div>
+
+    {% if invoices %}
+    <div class="card">
+        <h3>Invoice History</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Invoice No</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in invoices %}
+                <tr>
+                    <td>
+                        <div class="invoice-id">
+                            <strong>{{ invoice.id }}</strong>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="date-info">
+                            <i class="fas fa-calendar"></i>
+                            {{ invoice.date }}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="amount-info">
+                            ₹{{ "%.2f"|format(invoice.amount) }}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ invoice.status }}">
+                            {{ invoice.status.title() }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('view_invoice', invoice_id=invoice.id) }}" class="btn btn-outline btn-sm">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-file-invoice empty-state-icon"></i>
+        <h3 class="empty-state-title">No Invoices Found</h3>
+        <p class="empty-state-description">
+            This customer hasn't made any purchases yet.
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

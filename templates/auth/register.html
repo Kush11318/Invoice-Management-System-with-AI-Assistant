@@ -1,0 +1,74 @@
+{% extends "base.html" %} {% block title %}Register - Business Command Center{%
+endblock %} {% block content %}
+<div class="auth-container">
+  <div class="auth-card">
+    <h1 class="auth-title">Create Seller Account</h1>
+    <p class="auth-subtitle">Sign up for a new seller account</p>
+
+    <form method="POST" class="auth-form">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input
+          type="text"
+          name="name"
+          class="form-input"
+          placeholder="Enter your full name"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input
+          type="email"
+          name="email"
+          class="form-input"
+          placeholder="Enter your email"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Phone Number</label>
+        <input
+          type="tel"
+          name="phone"
+          class="form-input"
+          placeholder="Enter your phone number"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <textarea
+          name="address"
+          class="form-input form-textarea"
+          placeholder="Enter your address"
+          required
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input
+          type="password"
+          name="password"
+          class="form-input"
+          placeholder="Enter your password"
+          required
+        />
+        <input type="hidden" name="role" value="seller" />
+      </div>
+
+      <button type="submit" class="btn btn-primary w-full justify-center">
+        Create Account
+      </button>
+    </form>
+
+    <div class="auth-switch">
+      Already have an account? <a href="{{ url_for('login') }}">Sign in</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

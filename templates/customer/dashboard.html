@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Dashboard - Invoice Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">Customer Dashboard</h1>
+        <p class="dashboard-subtitle">Welcome back, {{ session.user_name }}</p>
+    </div>
+
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.total_invoices }}</div>
+            <div class="stat-label">Total Invoices</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">₹{{ "%.2f"|format(stats.total_amount) }}</div>
+            <div class="stat-label">Total Amount</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.pending_invoices }}</div>
+            <div class="stat-label">Pending Invoices</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.paid_invoices }}</div>
+            <div class="stat-label">Paid Invoices</div>
+        </div>
+    </div>
+
+    <div class="dashboard-content">
+        <div class="main-content">
+            <div class="section-header">
+                <h2 class="section-title">Your Invoices</h2>
+            </div>
+
+            {% if invoices %}
+            <div class="card">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Invoice No</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in invoices %}
+                        <tr>
+                            <td>
+                                <div class="invoice-id">
+                                    <strong>{{ invoice.id }}</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="date-info">
+                                    <i class="fas fa-calendar"></i>
+                                    {{ invoice.date }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="amount-info">
+                                    ₹{{ "%.2f"|format(invoice.amount) }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ invoice.status }}">
+                                    {{ invoice.status.title() }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{{ url_for('view_invoice', invoice_id=invoice.id) }}" class="btn btn-outline btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-file-invoice empty-state-icon"></i>
+                <h3 class="empty-state-title">No Invoices Found</h3>
+                <p class="empty-state-description">
+                    You don't have any invoices yet. Contact your seller to create one.
+                </p>
+            </div>
+            {% endif %}
+
+            <div class="recent-activity">
+                <div class="card">
+                    <h3 class="section-title">Recent Activity</h3>
+                    <div class="activity-list">
+                        {% for invoice in invoices[:3] %}
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                {% if invoice.status == 'paid' %}
+                                <i class="fas fa-indian-rupee-sign"></i>
+                                {% else %}
+                                <i class="fas fa-clock"></i>
+                                {% endif %}
+                            </div>
+                            <div class="activity-content">
+                                <p>
+                                    Invoice {{ invoice.id }} - {{ 'Payment received' if invoice.status == 'paid' else 'Payment pending' }}
+                                </p>
+                                <span class="activity-time">{{ invoice.date }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

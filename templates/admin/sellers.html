@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Sellers - Invoice Management System{% endblock %}
+
+{% block back_button %}
+<a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline btn-sm back-btn">
+    <i class="fas fa-arrow-left"></i>
+    Back to Dashboard
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="section-header">
+        <h2 class="section-title">Manage Sellers</h2>
+        <p class="dashboard-subtitle">
+            View, edit, or remove sellers from the platform.
+        </p>
+    </div>
+
+    <div class="card">
+        {% if sellers %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Seller ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for seller in sellers %}
+                <tr>
+                    <td>{{ seller.s_id }}</td>
+                    <td>{{ seller.s_name }}</td>
+                    <td>{{ seller.s_email }}</td>
+                    <td>{{ seller.s_phone }}</td>
+                    <td>{{ seller.s_address }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('admin_edit_seller', seller_id=seller.s_id) }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-edit"></i>
+                                Edit
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_delete_seller', seller_id=seller.s_id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete {{ seller.s_name }}?')">
+                                    <i class="fas fa-trash"></i>
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-user-times empty-state-icon"></i>
+            <h3 class="empty-state-title">No Sellers Found</h3>
+            <p class="empty-state-description">
+                Sellers who register will appear here for management.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

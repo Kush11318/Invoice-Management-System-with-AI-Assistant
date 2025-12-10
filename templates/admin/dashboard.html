@@ -1,0 +1,71 @@
+{% extends "base.html" %} {% block title %}Admin Dashboard - Invoice Management
+System{% endblock %} {% block back_button %}
+<a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm back-btn">
+  <i class="fas fa-sign-out-alt"></i>
+  Logout
+</a>
+{% endblock %} {% block content %}
+<div class="dashboard">
+  <div class="section-header">
+    <h2 class="section-title">Admin Dashboard</h2>
+    <p class="dashboard-subtitle">Overview of sellers and platform usage</p>
+  </div>
+
+  <div class="dashboard-stats">
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.total_sellers }}</div>
+      <div class="stat-label">Total Sellers</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.total_customers }}</div>
+      <div class="stat-label">Total Customers</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.total_products }}</div>
+      <div class="stat-label">Total Products</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.total_invoices }}</div>
+      <div class="stat-label">Total Invoices</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-header" style="margin-bottom: 12px">
+      <h3 class="section-title">Registered Sellers</h3>
+    </div>
+    {% if sellers %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Seller ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Address</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for seller in sellers %}
+        <tr>
+          <td>{{ seller.s_id }}</td>
+          <td>{{ seller.s_name }}</td>
+          <td>{{ seller.s_email }}</td>
+          <td>{{ seller.s_phone }}</td>
+          <td>{{ seller.s_address }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-user-times empty-state-icon"></i>
+      <h3 class="empty-state-title">No Sellers Found</h3>
+      <p class="empty-state-description">
+        Invite sellers to register so you can monitor their activity here.
+      </p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

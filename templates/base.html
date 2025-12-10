@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Invoice Management System{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ai_assistant.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    {% if session.user_id %}
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-left">
+                    {% block back_button %}{% endblock %}
+                    {% if session.user_role == 'admin' %}
+                    <a href="{{ url_for('admin_dashboard') }}" class="logo"> Invoice Management System - Admin</a>
+                    {% else %}
+                    <a href="{{ url_for('seller_dashboard') }}" class="logo"> Invoice Management System</a>
+                    {% endif %}
+                </div>
+                <nav class="header-nav">
+                    {% if session.user_role == 'admin' %}
+                    <a href="{{ url_for('admin_dashboard') }}"
+                        class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}"><i
+                            class="fas fa-chart-line"></i> Dashboard</a>
+                    <a href="{{ url_for('admin_sellers') }}"
+                        class="{% if request.endpoint == 'admin_sellers' %}active{% endif %}"><i
+                            class="fas fa-users"></i> Manage Sellers</a>
+                    {% else %}
+                    <a href="{{ url_for('seller_dashboard') }}"
+                        class="{% if request.endpoint == 'seller_dashboard' %}active{% endif %}"><i
+                            class="fas fa-chart-line"></i> Dashboard</a>
+                    <a href="{{ url_for('seller_products') }}"
+                        class="{% if request.endpoint in ['seller_products', 'add_product', 'edit_product'] %}active{% endif %}"><i
+                            class="fas fa-box"></i> Products</a>
+                    <a href="{{ url_for('seller_invoices') }}"
+                        class="{% if request.endpoint in ['seller_invoices', 'create_invoice', 'edit_invoice'] %}active{% endif %}"><i
+                            class="fas fa-file-invoice"></i> Invoices</a>
+                    <a href="{{ url_for('seller_customers') }}"
+                        class="{% if request.endpoint in ['seller_customers', 'view_customer_invoices'] %}active{% endif %}"><i
+                            class="fas fa-users"></i> Customers</a>
+                    <a href="{{ url_for('customer_analytics') }}"
+                        class="{% if request.endpoint == 'customer_analytics' %}active{% endif %}"><i
+                            class="fas fa-chart-bar"></i> Analytics</a>
+                    <a href="{{ url_for('create_invoice') }}"
+                        class="{% if request.endpoint in ['create_invoice'] %}active{% endif %}"><i
+                            class="fas fa-plus"></i> Create Invoice</a>
+                    {% endif %}
+                </nav>
+                <div class="user-menu" id="userMenu">
+                    <button type="button" class="btn btn-outline btn-sm user-toggle" id="userToggle">
+                        <i class="fas fa-user"></i>
+                        {{ session.user_name }}
+                        <i class="fas fa-chevron-down" style="margin-left: 4px;"></i>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="{{ url_for('logout') }}" class="dropdown-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <main class="main-content">
+        <div class="container">
+            {% else %}
+            <main class="auth-main">
+                {% endif %}
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+                {% if session.user_id %}
+        </div>
+        {% endif %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ai_assistant.js') }}"></script>
+</body>
+
+</html>

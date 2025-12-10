@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Customers - Invoice Management System{% endblock %}
+
+{% block back_button %}
+<a href="{{ url_for('seller_dashboard') }}" class="btn btn-outline btn-sm back-btn">
+    <i class="fas fa-arrow-left"></i>
+    Back to Dashboard
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="section-header">
+        <h2 class="section-title">Customer Management</h2>
+        <button type="button" class="btn btn-primary" onclick="showAddCustomerForm()">
+            <i class="fas fa-plus"></i>
+            Add Customer
+        </button>
+    </div>
+
+    <div class="card" style="margin-bottom: 16px;">
+        <form method="get" class="form-inline" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <div class="form-group" style="display: flex; align-items: center; gap: 12px; margin-bottom: 0;">
+                <input type="text" id="q" name="q" aria-label="Customer Name" value="{{ q or '' }}" class="form-input" placeholder="Search by name" style="max-width: 260px;">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+                <a href="{{ url_for('seller_customers') }}" class="btn btn-outline">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Add Customer Form (Hidden by default) -->
+    <div id="add-customer-form" style="display: none; margin-bottom: 20px;">
+        <div class="card">
+            <h3 class="form-section-title">Add New Customer</h3>
+            <form method="POST" action="{{ url_for('add_customer') }}">
+                <div class="form-group">
+                    <label class="form-label">Customer Name</label>
+                    <input type="text" name="name" class="form-input" placeholder="Enter customer name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-input" placeholder="Enter email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="text" name="phone" class="form-input" placeholder="Enter phone number" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Address</label>
+                    <textarea name="address" class="form-input form-textarea" placeholder="Enter address" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="hideAddCustomerForm()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Add Customer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if customers %}
+    <div class="card">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Customer ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td>
+                        <div class="customer-id">
+                            <strong>{{ customer.id }}</strong>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="customer-name">
+                            <strong>{{ customer.name }}</strong>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="customer-email">
+                            <i class="fas fa-envelope"></i>
+                            {{ customer.email }}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="customer-phone">
+                            <i class="fas fa-phone"></i>
+                            {{ customer.phone }}
+                        </div>
+                    </td>
+                    <td class="address-cell">{{ customer.address }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('view_customer_invoices', customer_id=customer.id) }}" class="btn btn-outline btn-sm">
+                                <i class="fas fa-file-invoice"></i>
+                                View Invoices
+                            </a>
+                            <a href="{{ url_for('edit_customer', customer_id=customer.id) }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-edit"></i>
+                                Edit
+                            </a>
+                            <a href="{{ url_for('delete_customer', customer_id=customer.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete customer {{ customer.name }}? This action cannot be undone.')">
+                                <i class="fas fa-trash"></i>
+                                Delete
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-users empty-state-icon"></i>
+        <h3 class="empty-state-title">No Customers Found</h3>
+        <p class="empty-state-description">
+            Customers will appear here once they register and make purchases.
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function showAddCustomerForm() {
+    document.getElementById('add-customer-form').style.display = 'block';
+}
+
+function hideAddCustomerForm() {
+    document.getElementById('add-customer-form').style.display = 'none';
+    // Clear form fields
+    document.querySelector('input[name="name"]').value = '';
+    document.querySelector('input[name="email"]').value = '';
+    document.querySelector('input[name="phone"]').value = '';
+    document.querySelector('textarea[name="address"]').value = '';
+}
+</script>
+{% endblock %}
