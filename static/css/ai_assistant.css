@@ -884,3 +884,31 @@
     border-color: #cbd5e1;
     transform: translateY(-1px);
 }
+
+.ai-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ai-lang-select {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    color: white;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.ai-lang-select:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.ai-lang-select option {
+    background: #1e1b4b;
+    color: white;
+}

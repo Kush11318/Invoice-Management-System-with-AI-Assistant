@@ -4,6 +4,9 @@ class AIAssistant {
         this.isListening = false;
         this.synth = window.speechSynthesis;
         this.chatHistory = []; // Memory
+        this.currentLang = localStorage.getItem('aiLang') || 'en-US';
+        this.voices = [];
+        this.loadVoices();
         this.initSpeechRecognition();
         this.createUI();
         this.checkAndPopulateInvoice(); // Check if we need to fill the form
@@ -14,7 +17,7 @@ class AIAssistant {
             this.recognition = new webkitSpeechRecognition();
             this.recognition.continuous = true; // Keep listening through pauses
             this.recognition.interimResults = true; // Transcribe live word-by-word
-            this.recognition.lang = 'en-IN'; // Good for Hinglish and Indian accents
+            this.recognition.lang = this.currentLang;
             this.silenceTimer = null;
 
             this.recognition.onstart = () => {
@@ -118,7 +121,18 @@ class AIAssistant {
         modal.innerHTML = `
             <div class="ai-modal-header">
                 <h3 class="ai-modal-title"><i class="fas fa-robot"></i> Billing Assistant</h3>
-                <button id="ai-close-btn" class="ai-close-btn" title="Close">×</button>
+                <div class="ai-header-controls">
+                    <select id="ai-lang-select" class="ai-lang-select" title="Select language for voice">
+                        <option value="en-US">🇬🇧 English</option>
+                        <option value="hi-IN">🇮🇳 Hindi</option>
+                        <option value="fr-FR">🇫🇷 French</option>
+                        <option value="gu-IN">🇮🇳 Gujarati</option>
+                        <option value="bn-IN">🇧🇩 Bengali</option>
+                        <option value="es-ES">🇪🇸 Spanish</option>
+                        <option value="de-DE">🇩🇪 German</option>
+                    </select>
+                    <button id="ai-close-btn" class="ai-close-btn" title="Close">×</button>
+                </div>
             </div>
             <div id="ai-chat-messages" class="ai-messages">
                 <div class="ai-message ai">
@@ -129,7 +143,7 @@ class AIAssistant {
                         • <strong>Add products:</strong> "Add product Milk price 50 stock 100"<br>
                         • <strong>Add customers:</strong> "Add customer John email john@example.com"<br>
                         • <strong>Create invoices:</strong> "Bill for Riya: 2 milks and 1 bread"<br><br>
-                        Try saying a command or click one of the quick commands below!
+                        🌐 Select your language above for multilingual voice support!
                     </div>
                 </div>
             </div>
@@ -160,6 +174,13 @@ class AIAssistant {
         document.getElementById('ai-close-btn').onclick = () => {
             this.closeChatModal();
         };
+
+        // Language selector
+        const langSelect = document.getElementById('ai-lang-select');
+        if (langSelect) {
+            langSelect.value = this.currentLang;
+            langSelect.onchange = () => this.setLanguage(langSelect.value);
+        }
         
         // Close modal when clicking outside (on the modal backdrop)
         modal.addEventListener('click', (e) => {
@@ -358,32 +379,86 @@ class AIAssistant {
         }
     }
 
-    speak(text) {
-        if (this.synth) {
-            // Cancel any current speech in the queue to prevent freezes
-            this.synth.cancel();
+    loadVoices() {
+        const populate = () => { this.voices = window.speechSynthesis.getVoices(); };
+        populate();
+        window.speechSynthesis.onvoiceschanged = populate;
+    }
 
-            // Prepare text for speech synthesis by removing emojis and formatting
-            let cleanText = text || '';
-            
-            // Whitelist only standard alphanumeric characters, basic punctuation, and whitespace
-            cleanText = cleanText.replace(/[^a-zA-Z0-9.,!?'"()%\s\-]/g, ' ');
+    getBestVoice(lang) {
+        const voices = window.speechSynthesis.getVoices();
+        const langBase = lang.split('-')[0];
+        // Try exact lang match first, then base language
+        let pool = voices.filter(v => v.lang === lang);
+        if (!pool.length) pool = voices.filter(v => v.lang.startsWith(langBase));
+        // Prefer natural/neural/premium voices
+        const premium = pool.find(v => /natural|neural|premium|enhanced/i.test(v.name));
+        return premium || pool[0] || null;
+    }
 
-            // Clean up whitespace
-            cleanText = cleanText.replace(/\s+/g, ' ').trim();
-
-            if (cleanText) {
-                const utterance = new SpeechSynthesisUtterance(cleanText);
-                
-                // Add error handling to resume/cancel if it gets stuck
-                utterance.onerror = (event) => {
-                    console.error('SpeechSynthesisUtterance error:', event.error);
-                    this.synth.cancel();
-                };
-
-                this.synth.speak(utterance);
-            }
+    setLanguage(lang) {
+        this.currentLang = lang;
+        localStorage.setItem('aiLang', lang);
+        // Update recognition language
+        if (this.recognition) {
+            const wasListening = this.isListening;
+            try { if (wasListening) this.recognition.stop(); } catch(e) {}
+            this.recognition.lang = lang;
         }
+        // Update placeholder hint
+        const input = document.getElementById('ai-text-input');
+        const hints = {
+            'en-US': 'Type or speak in English...',
+            'hi-IN': 'हिंदी में बोलें या टाइप करें...',
+            'fr-FR': 'Parlez ou écrivez en français...',
+            'gu-IN': 'ગુજરાતીમાં બોલો અથવા ટાઈપ કરો...',
+            'bn-IN': 'বাংলায় বলুন বা টাইপ করুন...',
+            'es-ES': 'Habla o escribe en español...',
+            'de-DE': 'Sprechen oder tippen Sie auf Deutsch...'
+        };
+        if (input) input.placeholder = hints[lang] || 'Type or speak...';
+        console.log(`Language set to: ${lang}`);
+    }
+
+    speak(text) {
+        if (!this.synth) return;
+        this.synth.cancel();
+
+        let cleanText = text || '';
+
+        // For Indic & European scripts: only strip emojis, keep native chars
+        const keepUnicode = ['hi-IN', 'gu-IN', 'bn-IN', 'fr-FR', 'es-ES', 'de-DE'];
+        if (keepUnicode.includes(this.currentLang)) {
+            // Remove emoji blocks only
+            cleanText = cleanText.replace(/[\u{1F300}-\u{1FFFF}]/gu, '')
+                                 .replace(/[\u2600-\u27BF]/g, '')
+                                 .replace(/\s+/g, ' ').trim();
+        } else {
+            // English: keep ASCII only
+            cleanText = cleanText.replace(/[^a-zA-Z0-9.,!?'"()%\s\-]/g, ' ')
+                                 .replace(/\s+/g, ' ').trim();
+        }
+
+        if (!cleanText) return;
+
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = this.currentLang;
+
+        // Pick the best available voice for the selected language
+        const bestVoice = this.getBestVoice(this.currentLang);
+        if (bestVoice) utterance.voice = bestVoice;
+
+        // Natural-sounding settings
+        utterance.rate  = 0.92;   // slightly slower = more natural
+        utterance.pitch = 1.05;   // very slight pitch lift
+        utterance.volume = 1.0;
+
+        utterance.onerror = (e) => {
+            console.error('SpeechSynthesis error:', e.error);
+            this.synth.cancel();
+        };
+
+        this.synth.speak(utterance);
     }
 
     showInvoicePreview(data) {
