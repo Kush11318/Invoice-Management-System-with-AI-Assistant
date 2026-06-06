@@ -1580,67 +1580,140 @@ def handle_internal_error(error):
 
 
 def auto_seed():
-    """Auto-seed demo data on first startup if database is empty."""
+    """Auto-seed demo data. Checks by specific demo email so it re-seeds if missing."""
     try:
-        if Seller.query.count() > 0:
-            print("Database already seeded, skipping.")
+        # Check specifically if our demo seller exists
+        demo_seller = Seller.query.filter_by(s_email='demo@invoiceai.com').first()
+        if demo_seller:
+            print("Demo data already exists, skipping auto-seed.")
             return
-        
+
         from decimal import Decimal
-        from datetime import datetime, date
+        from datetime import datetime, date, timedelta
 
-        print("Empty database detected — auto-seeding demo data...")
+        print("Seeding rich demo data...")
 
-        # Create default seller
+        # ── Seller ──────────────────────────────────────────────
         seller = Seller(
-            s_id="S001",
-            s_name="Global Trade Corp",
-            s_email="seller@example.com",
-            s_address="123 Innovation Boulevard, Tech Park, New Delhi",
+            s_id="DEMO01",
+            s_name="TechVault Pvt Ltd",
+            s_email="demo@invoiceai.com",
+            s_address="42 Sector 18, Cyber City, Gurgaon, Haryana 122002",
             s_phone="9876543210"
         )
-        seller.set_password("seller")
+        seller.set_password("demo123")
         db.session.add(seller)
         db.session.commit()
+        print("  ✓ Seller created: demo@invoiceai.com / demo123")
 
-        # Create demo products
-        products = [
-            ("P001", "Wireless Mouse", 850.00, "Ergonomic 2.4GHz wireless mouse.", 45),
-            ("P002", "Mechanical Keyboard", 2499.00, "RGB back-lit mechanical keyboard.", 4),
-            ("P003", "FullHD Monitor 24\"", 8999.00, "24-inch 1080p IPS display.", 15),
-            ("P004", "USB-C Docking Station", 3499.00, "Multi-port type-c docking hub.", 8),
-            ("P005", "Noise Cancelling Headphones", 5999.00, "Over-ear active noise cancelling headphones.", 25),
+        # ── Products ─────────────────────────────────────────────
+        products_data = [
+            ("DP001", "Wireless Mouse Pro",       1299.00, "Ergonomic 2.4GHz wireless mouse with 7 buttons and DPI switcher.", 60),
+            ("DP002", "Mechanical Keyboard RGB",  3499.00, "TKL mechanical keyboard with Cherry MX switches and per-key RGB.", 20),
+            ("DP003", "4K Monitor 27\"",          24999.00, "27-inch 4K UHD IPS panel, 144Hz, HDR400, USB-C.",                 8),
+            ("DP004", "USB-C Docking Station",    5999.00, "12-in-1 USB-C hub with dual HDMI, Ethernet, SD card reader.",     15),
+            ("DP005", "Noise Cancelling Headphones", 8999.00, "Over-ear ANC headphones, 30h battery, Bluetooth 5.2.",          30),
+            ("DP006", "Webcam 1080p HD",          2199.00, "Full HD webcam with built-in ring light and privacy cover.",      45),
+            ("DP007", "Laptop Stand Aluminium",    999.00, "Adjustable 6-angle aluminium laptop riser, foldable.",            50),
+            ("DP008", "External SSD 1TB",         6499.00, "Portable NVMe SSD, 1050MB/s read, USB 3.2 Gen2.",                25),
         ]
-        for p_id, name, price, desc, stock in products:
+        for p_id, name, price, desc, stock in products_data:
             db.session.add(Product(p_id=p_id, p_name=name, p_price=Decimal(str(price)),
-                                   p_description=desc, p_stock=stock, s_id="S001"))
+                                   p_description=desc, p_stock=stock, s_id="DEMO01"))
         db.session.commit()
+        print("  ✓ 8 products created")
 
-        # Create demo customers
-        customers = [
-            ("C001", "Alice Smith", "alice@gmail.com", "9988776655", "New Delhi"),
-            ("C002", "Bob Jones", "bob@yahoo.com", "8877665544", "Mumbai"),
-            ("C003", "Charlie Brown", "charlie@outlook.com", "7766554433", "Kolkata"),
-            ("C004", "Demo Customer", "customer@example.com", "9999999999", "Bangalore"),
+        # ── Customers ─────────────────────────────────────────────
+        customers_data = [
+            ("DC001", "Arjun Mehta",     "arjun.mehta@gmail.com",    "9911223344", "New Delhi"),
+            ("DC002", "Priya Sharma",    "priya.sharma@hotmail.com", "9922334455", "Mumbai"),
+            ("DC003", "Rahul Gupta",     "rahul.gupta@yahoo.com",    "9933445566", "Bangalore"),
+            ("DC004", "Sneha Reddy",     "sneha.reddy@outlook.com",  "9944556677", "Hyderabad"),
+            ("DC005", "Vikram Singh",    "vikram.singh@gmail.com",   "9955667788", "Pune"),
+            ("DC006", "Anjali Patel",    "anjali.patel@gmail.com",   "9966778899", "Ahmedabad"),
+            ("DC007", "Karan Joshi",     "karan.joshi@gmail.com",    "9977889900", "Kolkata"),
+            ("DC008", "Demo Customer",   "customer@example.com",     "9999999999", "Chennai"),
         ]
-        for c_id, name, email, phone, addr in customers:
+        for c_id, name, email, phone, addr in customers_data:
             c = Customer(c_id=c_id, c_name=name, c_email=email, c_phone_no=phone,
-                         c_address=addr, s_id="S001")
-            c.set_password("password")
+                         c_address=addr, s_id="DEMO01")
+            c.set_password("pass123")
             db.session.add(c)
         db.session.commit()
+        print("  ✓ 8 customers created")
 
-        # Seed activity log
-        db.session.add(Activity(user_id="S001", user_role="seller",
-                                action_type="product_added", description='Added product "Wireless Mouse"'))
-        db.session.add(Activity(user_id="S001", user_role="seller",
-                                action_type="customer_created", description='Added customer "Alice Smith"'))
+        # ── Invoices with Items ────────────────────────────────────
+        today = date.today()
+
+        def make_invoice(inv_no, cust_id, status, days_ago, items_list, tax_pct=18):
+            inv_date = datetime.utcnow() - timedelta(days=days_ago)
+            due = today - timedelta(days=days_ago - 30) if status == 'overdue' else today + timedelta(days=15)
+            subtotal = sum(Decimal(str(price)) * qty - Decimal(str(disc)) for price, qty, disc in items_list)
+            tax_amt  = (subtotal * Decimal(str(tax_pct))) / Decimal('100')
+            total    = subtotal + tax_amt
+            inv = Invoice(invoice_no=inv_no, invoice_datetime=inv_date, due_date=due,
+                          status=status, tax=tax_amt.quantize(Decimal('0.01')),
+                          amount=total.quantize(Decimal('0.01')), s_id="DEMO01", c_id=cust_id)
+            db.session.add(inv)
+            db.session.flush()
+            for price, qty, disc in items_list:
+                # find matching product
+                prod = Product.query.filter_by(p_price=Decimal(str(price)), s_id="DEMO01").first()
+                if prod:
+                    db.session.add(InvoiceItem(invoice_no=inv_no, p_id=prod.p_id,
+                                               item_quantity=qty, discount=Decimal(str(disc))))
+
+        # Paid invoices (revenue already collected)
+        make_invoice("INV-2024-001", "DC001", "paid",    90, [(1299, 2, 0),   (999, 1, 0)])
+        make_invoice("INV-2024-002", "DC002", "paid",    85, [(3499, 1, 200), (2199, 1, 0)])
+        make_invoice("INV-2024-003", "DC003", "paid",    80, [(24999, 1, 0)])
+        make_invoice("INV-2024-004", "DC004", "paid",    75, [(1299, 3, 150), (5999, 1, 0)])
+        make_invoice("INV-2024-005", "DC005", "paid",    70, [(6499, 2, 500)])
+        make_invoice("INV-2024-006", "DC001", "paid",    65, [(8999, 1, 0),   (999, 2, 0)])
+        make_invoice("INV-2024-007", "DC006", "paid",    60, [(3499, 2, 0),   (2199, 1, 0)])
+        make_invoice("INV-2024-008", "DC002", "paid",    55, [(5999, 1, 0),   (1299, 2, 0)])
+        make_invoice("INV-2024-009", "DC007", "paid",    45, [(24999, 1, 2000)])
+        make_invoice("INV-2024-010", "DC003", "paid",    40, [(6499, 1, 0),   (999, 3, 0)])
+        make_invoice("INV-2024-011", "DC004", "paid",    35, [(8999, 1, 500), (2199, 2, 0)])
+        make_invoice("INV-2024-012", "DC005", "paid",    30, [(3499, 1, 0),   (1299, 1, 0)])
+
+        # Pending invoices (awaiting payment)
+        make_invoice("INV-2025-001", "DC001", "pending", 20, [(5999, 1, 0),   (999, 2, 0)])
+        make_invoice("INV-2025-002", "DC006", "pending", 15, [(24999, 1, 0)])
+        make_invoice("INV-2025-003", "DC007", "pending", 10, [(3499, 2, 300)])
+        make_invoice("INV-2025-004", "DC008", "pending",  5, [(8999, 1, 0),   (1299, 3, 0)])
+        make_invoice("INV-2025-005", "DC002", "pending",  3, [(6499, 1, 0)])
+
+        # Overdue invoices
+        make_invoice("INV-OD-001", "DC003", "overdue", 50, [(24999, 1, 0)])
+        make_invoice("INV-OD-002", "DC004", "overdue", 45, [(8999, 1, 0), (5999, 1, 0)])
+        make_invoice("INV-OD-003", "DC005", "overdue", 38, [(3499, 2, 0)])
+
+        db.session.commit()
+        print("  ✓ 20 invoices created (12 paid, 5 pending, 3 overdue)")
+
+        # ── Activities ───────────────────────────────────────────
+        activities = [
+            ("invoice_created",  'Created invoice INV-2025-004 for Demo Customer'),
+            ("invoice_created",  'Created invoice INV-2025-003 for Karan Joshi'),
+            ("customer_created", 'Added new customer "Demo Customer"'),
+            ("product_added",    'Added product "External SSD 1TB"'),
+            ("invoice_paid",     'Invoice INV-2024-012 marked as paid'),
+            ("invoice_paid",     'Invoice INV-2024-011 marked as paid'),
+        ]
+        for act_type, desc in activities:
+            db.session.add(Activity(user_id="DEMO01", user_role="seller",
+                                    action_type=act_type, description=desc))
         db.session.commit()
 
-        print("Auto-seed completed! Login: seller@example.com / seller")
+        print("Auto-seed complete! 🎉")
+        print("  Login → demo@invoiceai.com / demo123")
+        print("  Customer login → customer@example.com / pass123")
     except Exception as e:
         db.session.rollback()
-        print(f"Auto-seed skipped or failed: {e}")
+        import traceback
+        traceback.print_exc()
+        print(f"Auto-seed failed: {e}")
 
 
 # Create database tables on startup (runs with both gunicorn and python app.py)
