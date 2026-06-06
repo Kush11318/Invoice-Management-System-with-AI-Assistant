@@ -9,6 +9,9 @@ class Config:
     # Database Configuration
     DATABASE_URL = os.environ.get('DATABASE_URL')
     if DATABASE_URL:
+        # Ensure we use pg8000 driver (pure Python, works on all Python versions)
+        if DATABASE_URL.startswith('postgresql://') or DATABASE_URL.startswith('postgres://'):
+            DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql+pg8000://', 1).replace('postgresql://', 'postgresql+pg8000://', 1)
         SQLALCHEMY_DATABASE_URI = DATABASE_URL
     else:
         # Default to SQLite if MySQL is not explicitly configured
