@@ -153,6 +153,82 @@ def get_translated_nav(target, lang_code):
         
     return f"Sure, taking you to the {target_name} page."
 
+def get_translated_insights(stats, lang_code):
+    revenue = stats.get('revenue', 0.0)
+    invoices_count = stats.get('invoices_count', 0)
+    customers_count = stats.get('customers_count', 0)
+    products_count = stats.get('products_count', 0)
+    low_stock = stats.get('low_stock', [])
+    top_selling = stats.get('top_selling', [])
+    
+    best_seller = top_selling[0]['name'] if top_selling else None
+    low_names = [p['name'] for p in low_stock[:2]] if low_stock else []
+    
+    if lang_code == 'hi-IN':
+        summary = f"यहाँ आपकी वास्तविक समय की व्यापार रिपोर्ट है। आपने {invoices_count} इनवॉइस में कुल ₹{revenue:.2f} का राजस्व अर्जित किया है। "
+        summary += f"आपके पास {customers_count} ग्राहकों की सेवा करने वाले {products_count} सक्रिय उत्पाद हैं। "
+        if best_seller:
+            summary += f"आपका सबसे अधिक बिकने वाला उत्पाद {best_seller} है। "
+        if low_stock:
+            summary += f"आपके पास {len(low_stock)} उत्पाद हैं जिनका स्टॉक कम है, जिसमें {', '.join(low_names)} शामिल हैं। आपको जल्द ही स्टॉक अपडेट करना चाहिए!"
+        else:
+            summary += "आपके सभी उत्पाद पर्याप्त मात्रा में उपलब्ध हैं!"
+        return summary
+        
+    elif lang_code == 'fr-FR':
+        summary = f"Voici votre rapport d'activité en temps réel. Vous avez généré un chiffre d'affaires total de INR {revenue:.2f} sur {invoices_count} factures. "
+        summary += f"Votre inventaire contient {products_count} produits actifs pour {customers_count} clients enregistrés. "
+        if best_seller:
+            summary += f"Votre produit le plus vendu est {best_seller}. "
+        if low_stock:
+            summary += f"Vous avez {len(low_stock)} articles en rupture de stock, notamment {', '.join(low_names)}. Vous devriez vous réapprovisionner bientôt !"
+        else:
+            summary += "Les niveaux de stock de vos produits sont excellents !"
+        return summary
+
+    elif lang_code == 'es-ES':
+        summary = f"Aquí está su informe comercial en tiempo real. Ha obtenido un ingreso total de INR {revenue:.2f} a través de {invoices_count} facturas. "
+        summary += f"Su inventario cuenta con {products_count} productos activos para {customers_count} clientes registrados. "
+        if best_seller:
+            summary += f"Su producto más vendido es {best_seller}. "
+        if low_stock:
+            summary += f"Tiene {len(low_stock)} artículos con stock bajo, incluyendo {', '.join(low_names)}. ¡Debería reabastecerse pronto!"
+        else:
+            summary += "¡Los niveles de stock de sus productos están en perfecto estado!"
+        return summary
+
+    elif lang_code == 'de-DE':
+        summary = f"Hier ist Ihr Echtzeit-Geschäftsbericht. Sie haben einen Gesamtumsatz von INR {revenue:.2f} aus {invoices_count} Rechnungen erzielt. "
+        summary += f"Ihr Inventar umfasst {products_count} aktive Produkte für {customers_count} registrierte Kunden. "
+        if best_seller:
+            summary += f"Ihr meistverkauftes Produkt ist {best_seller}. "
+        if low_stock:
+            summary += f"Sie haben {len(low_stock)} Artikel mit geringem Lagerbestand, darunter {', '.join(low_names)}. Sie sollten bald nachbestellen!"
+        else:
+            summary += "Ihre Lagerbestände sind im grünen Bereich!"
+        return summary
+
+    elif lang_code == 'ja-JP':
+        summary = f"リアルタイムのビジネスレポートです。現在までに{invoices_count}件の請求書から、合計 {revenue:.2f} インドルピーの売上を達成しています。 "
+        summary += f"登録顧客数は{customers_count}名、取り扱い商品数は{products_count}点です。 "
+        if best_seller:
+            summary += f"最も売れている商品は{best_seller}です。 "
+        if low_stock:
+            summary += f"在庫数が残り少ない商品が{len(low_stock)}点（{', '.join(low_names)}など）あります。お早めに補充してください。"
+        else:
+            summary += "商品の在庫状況はすべて良好です！"
+        return summary
+        
+    summary = f"Here is your real-time business health report. You have earned a total revenue of INR {revenue:.2f} across {invoices_count} invoices. "
+    summary += f"Your inventory has {products_count} active products serving {customers_count} registered customers. "
+    if best_seller:
+        summary += f"Your top-performing product is {best_seller}. "
+    if low_stock:
+        summary += f"You have {len(low_stock)} items running low in stock, including {', '.join(low_names)}. You should restock soon!"
+    else:
+        summary += "Your product stock levels are fully healthy!"
+    return summary
+
 def parse_command(user_text, context, history=[], language='en-IN'):
     """
     Parses user text using a configured AI model (Groq or Gemini).
@@ -163,15 +239,64 @@ def parse_command(user_text, context, history=[], language='en-IN'):
     # 1. Deterministic Heuristic Routing for Navigation and Insights
     text_lower = user_text.lower().strip()
     
-    # A. Navigation keywords mapping
+    # A. Navigation keywords mapping (multi-lingual)
     nav_targets = {
-        'dashboard': ['go to dashboard', 'show dashboard', 'open dashboard', 'view dashboard', 'dashboard page'],
-        'products': ['go to products', 'show products', 'open products', 'view products', 'products inventory', 'products page'],
-        'invoices': ['go to invoices', 'show invoices', 'open invoices', 'view invoices', 'invoices list', 'invoices page'],
-        'customers': ['go to customers', 'show customers', 'open customers', 'view customers', 'customer list', 'customers page'],
-        'analytics': ['go to analytics', 'show analytics', 'open analytics', 'view analytics', 'analytics page'],
-        'create_invoice': ['create invoice', 'create an invoice', 'new invoice'],
-        'logout': ['log out', 'logout', 'sign out']
+        'dashboard': [
+            'go to dashboard', 'show dashboard', 'open dashboard', 'view dashboard', 'dashboard page',
+            'डैशबोर्ड', 'डैशबोर्ड पर जाओ', 'डैशबोर्ड दिखाओ',
+            'tableau de bord', 'aller au tableau de bord',
+            'tablero', 'ir al tablero',
+            'dashboard', 'gehe zu dashboard',
+            'ダッシュボード', 'ダッシュボードへ移動'
+        ],
+        'products': [
+            'go to products', 'show products', 'open products', 'view products', 'products inventory', 'products page',
+            'उत्पाद', 'उत्पाद पर जाओ', 'उत्पाद सूची', 'उत्पाद दिखाओ', 'उत्पाद दिखाएं', 'प्रोडक्ट्स पर जाएं',
+            'produits', 'aller aux produits', 'inventaire des produits',
+            'productos', 'ir a productos', 'inventario de productos',
+            'produkte', 'gehe zu produkten', 'produktinventar',
+            '商品一覧', '商品一覧へ移動', '商品'
+        ],
+        'invoices': [
+            'go to invoices', 'show invoices', 'open invoices', 'view invoices', 'invoices list', 'invoices page',
+            'इनवॉइस', 'इनवॉइस पर जाओ', 'इनवॉइस सूची', 'इनवॉइस दिखाओ', 'इनवॉइस दिखाएं',
+            'factures', 'aller aux factures', 'liste des factures',
+            'facturas', 'ir a facturas', 'lista de facturas',
+            'rechnungen', 'gehe zu rechnungen', 'rechnungsliste',
+            '請求書一覧', '請求書一覧へ移動', '請求書'
+        ],
+        'customers': [
+            'go to customers', 'show customers', 'open customers', 'view customers', 'customer list', 'customers page',
+            'ग्राहक', 'ग्राहक पर जाओ', 'ग्राहक सूची', 'ग्राहक दिखाओ', 'ग्राहक दिखाएं', 'ग्राहक प्रबंधन',
+            'clients', 'aller aux clients', 'gestion des clients',
+            'clientes', 'ir a clientes', 'gestión de clientes',
+            'kunden', 'gehe zu kunden', 'kundenverwaltung',
+            '顧客管理', '顧客管理へ移動', '顧客'
+        ],
+        'analytics': [
+            'go to analytics', 'show analytics', 'open analytics', 'view analytics', 'analytics page',
+            'एनालिटिक्स', 'एनालिटिक्स पर जाओ', 'एनालिटिक्स दिखाओ', 'एनालिटिक्स दिखाएं', 'एनालिटिक्स केंद्र',
+            'analyses', 'afficher les analyses', 'centre d\'analyse',
+            'análisis', 'mostrar análisis', 'centro de análisis',
+            'analysen', 'analysen anzeigen', 'analysenzentrum',
+            '分析', '分析を見せて', '分析センター'
+        ],
+        'create_invoice': [
+            'create invoice', 'create an invoice', 'new invoice',
+            'इनवॉइस बनाएं', 'नया इनवॉइस', 'इनवॉइस बनाओ',
+            'créer une facture', 'créer facture', 'nouvelle facture',
+            'crear factura', 'nueva factura',
+            'rechnung erstellen', 'neue rechnung',
+            '請求書作成', '新しい請求書'
+        ],
+        'logout': [
+            'log out', 'logout', 'sign out',
+            'लॉगआउट', 'लॉग आउट', 'साइन आउट',
+            'déconnexion', 'se déconnecter',
+            'cerrar sesión', 'desconectarse',
+            'abmelden', 'ausloggen',
+            'ログアウト', 'サインアウト'
+        ]
     }
     
     for target, phrases in nav_targets.items():
@@ -183,30 +308,18 @@ def parse_command(user_text, context, history=[], language='en-IN'):
                 "response_text": get_translated_nav(target, language)
             }
             
-    # B. Business Insights keywords mapping
-    insight_phrases = ['business insights', 'show insights', 'view insights', 'sales metrics', 'business stats', 'view statistics', 'how is business', 'how is the business doing', 'insights']
+    # B. Business Insights keywords mapping (multi-lingual)
+    insight_phrases = [
+        'business insights', 'show insights', 'view insights', 'sales metrics', 'business stats', 'view statistics', 'how is business', 'how is the business doing', 'insights',
+        'व्यापार रिपोर्ट', 'व्यापार रिपोर्ट दिखाएं', 'बिजनेस कैसा है', 'बिजनेस कैसा चल रहा है', 'इनसाइट्स',
+        'perspectives commerciales', 'comment vont les affaires', 'rapport d\'activité', 'statistiques',
+        'información comercial', 'cómo va el negocio', 'estado del negocio', 'estadísticas',
+        'geschäftszahlen', 'wie läuft das geschäft', 'geschäftseinblicke', 'statistiken',
+        'ビジネス分析', '業績はどう', 'ビジネスレポート', 'インサイト'
+    ]
     if any(phrase in text_lower for phrase in insight_phrases):
         s = context.get('stats', {})
-        revenue = s.get('revenue', 0.0)
-        invoices_count = s.get('invoices_count', 0)
-        customers_count = s.get('customers_count', 0)
-        products_count = s.get('products_count', 0)
-        low_stock = s.get('low_stock', [])
-        top_selling = s.get('top_selling', [])
-        
-        summary = f"Here is your real-time business health report. You have earned a total revenue of INR {revenue:.2f} across {invoices_count} invoices. "
-        summary += f"Your inventory has {products_count} active products serving {customers_count} registered customers. "
-        
-        if top_selling:
-            best_seller = top_selling[0]['name']
-            summary += f"Your top-performing product is {best_seller}. "
-            
-        if low_stock:
-            low_names = [p['name'] for p in low_stock[:2]]
-            summary += f"You have {len(low_stock)} items running low in stock, including {', '.join(low_names)}. You should restock soon!"
-        else:
-            summary += "Your product stock levels are fully healthy!"
-            
+        summary = get_translated_insights(s, language)
         return {
             "intent": "business_insights",
             "data": {},
